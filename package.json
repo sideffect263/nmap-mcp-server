@@ -1,0 +1,15 @@
+{
+  "name": "nmap-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP-compliant server for Nmap",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "nmap-mcp-server": "file:",
+    "uuid": "^8.3.2",
+    "xml2js": "^0.6.2"
+  }
+}
