@@ -9,7 +9,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 RUN npm install
-RUN apk add --no-cache nmap
+RUN apk add --no-cache nmap nmap-scripts
 
 # Check for nse_main.lua in the standard location for nmap data files
 # This command will fail the build if the file is not found,
