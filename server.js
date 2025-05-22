@@ -157,7 +157,7 @@ function createMcpServer({ sessionId, config }) {
         }
 
         // Construct and execute nmap command
-        const nmapCommand = `${NMAP_PATH} -oX - ${flags} ${target}`;
+        const nmapCommand = `${NMAP_PATH} --datadir /usr/share/nmap -oX - ${flags} ${target}`;
         console.log(`${logPrefix} Executing command: ${nmapCommand}`);
         
         const { stdout, stderr } = await execAsync(nmapCommand, {
