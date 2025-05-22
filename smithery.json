@@ -1,0 +1,49 @@
+{
+    "name": "nmap-mcp-server",
+    "version": "1.0.0",
+    "description": "Network scanning MCP server using Nmap for port discovery and service detection",
+    "author": "Your Name",
+    "homepage": "https://github.com/your-username/nmap-mcp-server",
+    "repository": "https://github.com/your-username/nmap-mcp-server.git",
+    "license": "MIT",
+    "keywords": ["nmap", "network-scanning", "security", "port-scanning", "service-detection"],
+    "transport": {
+      "type": "http"
+    },
+    "runtime": "nodejs",
+    "config": {
+      "schema": {},
+      "required": []
+    },
+    "capabilities": {
+      "tools": [
+        {
+          "name": "nmapScan",
+          "description": "Perform network scanning using Nmap to discover open ports and services",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "target": {
+                "type": "string",
+                "description": "Domain name, IP address, or CIDR notation to scan (e.g., example.com, 192.168.1.1, 10.0.0.0/24)"
+              },
+              "flags": {
+                "type": "string",
+                "description": "Nmap scanning flags. Common options: -T4 (timing), -p 1-1000 (port range), -sS (SYN scan), -sV (service detection)",
+                "default": "-T4 -p 1-1000"
+              }
+            },
+            "required": ["target"]
+          }
+        },
+        {
+          "name": "getInfo",
+          "description": "Get information about the Nmap service and available capabilities",
+          "inputSchema": {
+            "type": "object",
+            "properties": {}
+          }
+        }
+      ]
+    }
+  }

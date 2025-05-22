@@ -1,108 +1,254 @@
-const express = require('express');
-const { v4: uuidv4 } = require('uuid');
-const { exec } = require('child_process');
-const xml2js = require('xml2js');
+import { createStatelessServer } from '@smithery/sdk/server/stateless.js';
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from 'zod';
+import { exec } from 'child_process';
+import { Parser as XmlParser } from 'xml2js';
+import { promisify } from 'util';
 
-const app = express();
-const port = process.env.PORT || 3000;
+const xmlParser = new XmlParser({ explicitArray: false, mergeAttrs: true });
+const execAsync = promisify(exec);
 
-app.use(express.json());
+// Input validation and sanitization
+function validateTarget(target) {
+  // Basic validation for domain names and IP addresses
+  const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/;
+  const ipRegex = /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/;
+  const cidrRegex = /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}\/([0-2]?[0-9]|3[0-2])$/;
+  
+  return domainRegex.test(target) || ipRegex.test(target) || cidrRegex.test(target);
+}
 
-// In-memory store for tasks
-const tasks = {};
+function validateFlags(flags) {
+  // Handle undefined/null flags
+  if (!flags || typeof flags !== 'string') {
+    return false;
+  }
+  
+  // Whitelist of safe nmap flags
+  const allowedFlags = [
+    '-T0', '-T1', '-T2', '-T3', '-T4', '-T5',
+    '-sS', '-sT', '-sU', '-sA', '-sW', '-sM', '-sV', '-sC',
+    '-F', '-r', '--top-ports', '-p', '-A', '-O',
+    '--version-intensity', '--osscan-limit', '--osscan-guess',
+    '-oX', '-oN', '-oG', '-v', '-d', '--reason', '--open', '--packet-trace'
+  ];
+  
+  const flagsArray = flags.split(/\s+/);
+  
+  for (let i = 0; i < flagsArray.length; i++) {
+    const flag = flagsArray[i];
+    
+    // Skip empty flags
+    if (!flag) continue;
+    
+    // Check if it's a port specification (after -p flag)
+    if (i > 0 && flagsArray[i-1] === '-p') {
+      // Validate port specification: numbers, commas, dashes
+      if (flag.match(/^[\d,\-]+$/)) {
+        // Further validate individual port specs
+        const portSpecs = flag.split(',');
+        const validPortSpec = portSpecs.every(spec => {
+          // Single port: 80
+          if (spec.match(/^\d+$/)) return parseInt(spec) <= 65535;
+          // Port range: 80-90
+          if (spec.match(/^\d+-\d+$/)) {
+            const [start, end] = spec.split('-').map(Number);
+            return start <= end && start > 0 && end <= 65535;
+          }
+          return false;
+        });
+        if (validPortSpec) continue;
+      }
+      return false;
+    }
+    
+    // Check if it's a standalone number (port range after --top-ports)
+    if (i > 0 && flagsArray[i-1] === '--top-ports') {
+      if (flag.match(/^\d+$/) && parseInt(flag) <= 65535) continue;
+      return false;
+    }
+    
+    // Check if it matches allowed flags
+    const isAllowedFlag = allowedFlags.some(allowed => flag.startsWith(allowed));
+    if (!isAllowedFlag) {
+      console.log(`Flag validation failed for: ${flag}`);
+      return false;
+    }
+  }
+  
+  return true;
+}
 
-// /introspect endpoint
-app.get('/introspect', (req, res) => {
-  res.json({
-    name: 'Nmap Scanner',
-    description: 'Scans a target using Nmap and returns structured results.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        target: { type: 'string', description: 'Domain or IP address to scan' },
-        flags: { type: 'string', description: 'Nmap flags (e.g., -T4 -p 1-1000)', default: '-T4 -p 1-1000' }
-      },
-      required: ['target']
+function createMcpServer({ sessionId, config }) {
+  console.log(`[${sessionId || 'N/A'}] Creating MCP server instance`);
+  
+  const mcpServer = new McpServer({
+    name: "NmapService",
+    version: "1.0.0",
+  });
+
+  // Add the nmap scan tool
+  mcpServer.tool(
+    "nmapScan",
+    {
+      target: z.string().describe("Domain name, IP address, or CIDR notation to scan (e.g., example.com, 192.168.1.1, 10.0.0.0/24)"),
+      flags: z.string().optional().default("-T4 -p 1-1000").describe("Nmap scanning flags. Common options: -T4 (timing), -p 1-1000 (port range), -sS (SYN scan), -A (aggressive scan)")
     },
-    output_schema: {
-      type: 'object',
-      properties: {
-        taskId: { type: 'string' },
-        status: { type: 'string' },
-        // Define more output properties as needed
+    async ({ target, flags = "-T4 -p 1-1000" }) => {
+      const logPrefix = `[${sessionId || 'N/A'}]`;
+      
+      // Debug: Log the received arguments
+      console.log(`${logPrefix} Received target: ${target}, flags: ${flags}`);
+      
+      try {
+        console.log(`${logPrefix} Starting Nmap scan for target: ${target}`);
+        
+        // Validate inputs
+        if (!validateTarget(target)) {
+          throw new Error(`Invalid target format: ${target}. Use domain names, IP addresses, or CIDR notation.`);
+        }
+        
+        if (!validateFlags(flags)) {
+          throw new Error(`Invalid or potentially unsafe flags detected: ${flags}`);
+        }
+
+        // Construct and execute nmap command
+        const nmapCommand = `nmap -oX - ${flags} ${target}`;
+        console.log(`${logPrefix} Executing command: ${nmapCommand}`);
+        
+        const { stdout, stderr } = await execAsync(nmapCommand, {
+          timeout: 300000, // 5 minute timeout
+          maxBuffer: 1024 * 1024 * 10 // 10MB buffer
+        });
+
+        if (stderr) {
+          console.warn(`${logPrefix} Nmap stderr: ${stderr}`);
+        }
+
+        // Parse XML output
+        const parsedResult = await new Promise((resolve, reject) => {
+          xmlParser.parseString(stdout, (parseError, result) => {
+            if (parseError) {
+              reject(new Error(`Failed to parse Nmap XML output: ${parseError.message}`));
+            } else {
+              resolve(result);
+            }
+          });
+        });
+
+        console.log(`${logPrefix} Nmap scan completed successfully for ${target}`);
+
+        // Validate parsed result structure
+        if (!parsedResult || typeof parsedResult.nmaprun !== 'object') {
+          throw new Error("Nmap output parsing did not yield expected nmaprun structure");
+        }
+
+        // Format results for better readability
+        const summary = formatNmapResults(parsedResult);
+        
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Nmap Scan Results for ${target}\n\n${summary}\n\nFull XML Output:\n${JSON.stringify(parsedResult, null, 2)}`
+            }
+          ]
+        };
+
+      } catch (error) {
+        console.error(`${logPrefix} Nmap scan failed: ${error.message}`);
+        
+        return {
+          content: [
+            {
+              type: "text", 
+              text: `Nmap scan failed for target: ${target}\n\nError: ${error.message}`
+            }
+          ]
+        };
       }
     }
-  });
-});
+  );
 
-// /invoke endpoint
-app.post('/invoke', (req, res) => {
-  const { target, flags = '-T4 -p 1-1000' } = req.body;
-
-  if (!target) {
-    return res.status(400).json({ error: 'Target is required' });
-  }
-
-  const taskId = uuidv4();
-  tasks[taskId] = { id: taskId, status: 'pending', target, flags, result: null, error: null };
-
-  // Ensure Nmap outputs in XML to stdout for parsing
-  const nmapCommand = `nmap -oX - ${flags} ${target}`;
-  console.log(`Starting Nmap scan for target: ${target} with command: ${nmapCommand}`);
-
-  exec(nmapCommand, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Nmap execution error: ${error.message}`);
-      tasks[taskId].status = 'failed';
-      tasks[taskId].error = `Nmap execution failed: ${error.message}`;
-      if (stderr) {
-        tasks[taskId].error += `\nStderr: ${stderr}`;
-      }
-      return;
+  // Add a simple info tool for testing introspection
+  mcpServer.tool(
+    "getInfo",
+    z.object({}),
+    async () => {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Nmap Service Information:
+- Service: Network scanning using Nmap
+- Version: 1.0.0
+- Available Tools: nmapScan, getInfo
+- Session ID: ${sessionId || 'N/A'}
+- Supported Targets: Domain names, IP addresses, CIDR notation
+- Security: Input validation and command sanitization enabled`
+          }
+        ]
+      };
     }
+  );
 
-    // Nmap might output warnings to stderr even on success, so we log it.
-    if (stderr) {
-      console.warn(`Nmap stderr: ${stderr}`);
-    }
+  console.log(`${sessionId || 'N/A'} MCP server instance created with tools: nmapScan, getInfo`);
+  return mcpServer;
+}
 
-    console.log(`Nmap scan raw XML output received for ${target}. Parsing...`);
-    xml2js.parseString(stdout, { explicitArray: false, mergeAttrs: true }, (parseError, parsedResult) => {
-      if (parseError) {
-        console.error(`Nmap XML parsing error: ${parseError.message}`);
-        tasks[taskId].status = 'failed';
-        tasks[taskId].error = `Failed to parse Nmap XML output: ${parseError.message}`;
-        return;
+// Helper function to format nmap results
+function formatNmapResults(parsedResult) {
+  try {
+    const nmaprun = parsedResult.nmaprun;
+    let summary = `Scan started: ${nmaprun.startstr || 'Unknown'}\n`;
+    
+    if (nmaprun.host) {
+      const hosts = Array.isArray(nmaprun.host) ? nmaprun.host : [nmaprun.host];
+      
+      for (const host of hosts) {
+        const address = host.address?.addr || 'Unknown';
+        const hostname = host.hostnames?.hostname?.name || '';
+        summary += `\nHost: ${address}${hostname ? ` (${hostname})` : ''}\n`;
+        summary += `Status: ${host.status?.state || 'Unknown'}\n`;
+        
+        if (host.ports?.port) {
+          const ports = Array.isArray(host.ports.port) ? host.ports.port : [host.ports.port];
+          summary += `Open ports:\n`;
+          
+          for (const port of ports) {
+            if (port.state?.state === 'open') {
+              summary += `  ${port.portid}/${port.protocol} - ${port.service?.name || 'unknown'}\n`;
+            }
+          }
+        }
       }
-      console.log(`Nmap XML parsed successfully for ${target}`);
-      tasks[taskId].status = 'completed';
-      tasks[taskId].result = parsedResult;
-    });
-  });
+    }
+    
+    summary += `\nScan completed: ${nmaprun.runstats?.finished?.timestr || 'Unknown'}`;
+    return summary;
+  } catch (error) {
+    return "Could not format scan results - see full XML output below";
+  }
+}
 
-  res.status(202).json({ taskId, status: 'pending', message: 'Nmap scan initiated' });
+// Create and start the server
+console.log('Initializing Nmap MCP Server...');
+
+const { app } = createStatelessServer(createMcpServer);
+const PORT = process.env.PORT || 5001;
+
+app.listen(PORT, () => {
+  console.log(`MCP Nmap server (Smithery SDK) is running on port ${PORT}`);
+  console.log(`Server ready to accept MCP connections`);
 });
 
-// /result endpoint
-app.get('/result/:taskId', (req, res) => {
-  const { taskId } = req.params;
-  const task = tasks[taskId];
-
-  if (!task) {
-    return res.status(404).json({ error: 'Task not found' });
-  }
-
-  if (task.status === 'pending') {
-    return res.status(202).json({ taskId, status: 'pending', message: 'Nmap scan is still in progress.' });
-  }
-
-  if (task.status === 'failed') {
-    return res.status(500).json({ taskId, status: 'failed', error: task.error });
-  }
-
-  res.json({ taskId, status: 'completed', result: task.result }); // Will return structured result later
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM, shutting down gracefully');
+  process.exit(0);
 });
 
-app.listen(port, () => {
-  console.log(`Nmap MCP server listening at http://localhost:${port}`);
-}); 
+process.on('SIGINT', () => {
+  console.log('Received SIGINT, shutting down gracefully');
+  process.exit(0);
+});

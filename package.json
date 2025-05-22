@@ -3,13 +3,17 @@
   "version": "1.0.0",
   "description": "MCP-compliant server for Nmap",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.4",
+    "@smithery/sdk": "^1.3.3",
     "express": "^4.17.1",
     "nmap-mcp-server": "file:",
     "uuid": "^8.3.2",
-    "xml2js": "^0.6.2"
+    "xml2js": "^0.6.2",
+    "zod": "^3.23.8"
   }
 }
