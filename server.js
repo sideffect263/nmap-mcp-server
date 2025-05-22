@@ -63,7 +63,8 @@ function validateFlags(flags) {
     '-sS', '-sT', '-sU', '-sA', '-sW', '-sM', '-sV', '-sC',
     '-F', '-r', '--top-ports', '-p', '-A', '-O',
     '--version-intensity', '--osscan-limit', '--osscan-guess',
-    '-oX', '-oN', '-oG', '-v', '-d', '--reason', '--open', '--packet-trace'
+    '-oX', '-oN', '-oG', '-v', '-d', '--reason', '--open', '--packet-trace',
+    '--script'
   ];
   
   const flagsArray = flags.split(/\s+/);
@@ -98,6 +99,16 @@ function validateFlags(flags) {
     // Check if it's a standalone number (port range after --top-ports)
     if (i > 0 && flagsArray[i-1] === '--top-ports') {
       if (flag.match(/^\d+$/) && parseInt(flag) <= 65535) continue;
+      return false;
+    }
+    
+    // Check if it's a script name (after --script flag)
+    if (i > 0 && flagsArray[i-1] === '--script') {
+      // Allow 'vuln' script and potentially others in the future by relaxing this check
+      // For now, let's be specific or allow any alphanumeric script name
+      if (flag.match(/^[a-zA-Z0-9_\-]+$/)) { 
+        continue;
+      }
       return false;
     }
     

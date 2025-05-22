@@ -10,6 +10,7 @@ COPY package*.json ./
 
 RUN npm install
 RUN apk add --no-cache nmap
+ENV NMAPDIR /usr/share/nmap
 # If you are building your code for production
 # RUN npm ci --omit=dev
 
