@@ -1,12 +1,45 @@
 import { createStatelessServer } from '@smithery/sdk/server/stateless.js';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from 'zod';
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import { Parser as XmlParser } from 'xml2js';
 import { promisify } from 'util';
 
 const xmlParser = new XmlParser({ explicitArray: false, mergeAttrs: true });
 const execAsync = promisify(exec);
+
+// Function to find nmap executable
+function findNmapPath() {
+  try {
+    // Try 'which' command, common on Linux/macOS
+    const path = execSync('which nmap').toString().trim();
+    if (path) {
+      console.log(`Found nmap at: ${path}`);
+      return path;
+    }
+  } catch (error) {
+    // 'which' might not be available or nmap not in PATH
+    console.warn("'which nmap' failed, trying 'where nmap' or default path.");
+  }
+
+  try {
+    // Try 'where' command, common on Windows, though less likely in Docker
+    const path = execSync('where nmap').toString().trim().split('\\n')[0]; // Take the first result if multiple
+    if (path) {
+      console.log(`Found nmap at: ${path}`);
+      return path;
+    }
+  } catch (error) {
+     console.warn("'where nmap' failed, falling back to default path.");
+  }
+  
+  // Fallback to a common default path if not found
+  const defaultPath = "/usr/bin/nmap"; // A common path on Linux
+  console.log(`Nmap not found via which/where, using default path: ${defaultPath}`);
+  return defaultPath;
+}
+
+const NMAP_PATH = findNmapPath();
 
 // Input validation and sanitization
 function validateTarget(target) {
@@ -113,7 +146,7 @@ function createMcpServer({ sessionId, config }) {
         }
 
         // Construct and execute nmap command
-        const nmapCommand = `nmap -oX - ${flags} ${target}`;
+        const nmapCommand = `${NMAP_PATH} -oX - ${flags} ${target}`;
         console.log(`${logPrefix} Executing command: ${nmapCommand}`);
         
         const { stdout, stderr } = await execAsync(nmapCommand, {
