@@ -9,13 +9,14 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 RUN npm install
-RUN apk add --no-cache nmap nmap-scripts
+# Install nmap core plus NSE libraries and scripts
+RUN apk add --no-cache nmap nmap-nselibs nmap-scripts
 
 # Check for nse_main.lua in the standard location for nmap data files
 # This command will fail the build if the file is not found,
 # which should be visible in Smithery's deployment logs.
-RUN if [ ! -f /usr/share/nmap/scripts/nse_main.lua ]; then \
-    echo "ERROR: /usr/share/nmap/scripts/nse_main.lua NOT FOUND!"; \
+RUN if [ ! -f /usr/share/nmap/nse_main.lua ]; then \
+    echo "ERROR: /usr/share/nmap/nse_main.lua NOT FOUND!"; \
     echo "Listing contents of /usr/share/nmap/ and /usr/share/nmap/scripts/ (if they exist):"; \
     ls -R /usr/share/nmap || echo "/usr/share/nmap does not exist or is empty"; \
     exit 1; \
