@@ -28,6 +28,9 @@ ENV NMAPDIR /usr/share/nmap
 # Bundle app source
 COPY . .
 
+# Ensure public directory is available
+RUN ls -la public/ || echo "Warning: public directory not found"
+
 EXPOSE 5001
 
 CMD [ "node", "server.js" ] 

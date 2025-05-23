@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nmap MCP Server - Network Scanning as a Service</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</head>
+<body>
+    <div class="background-animation"></div>
+    
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-network-wired"></i>
+                <span>Nmap MCP</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#home" class="nav-link" data-section="home">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#features" class="nav-link" data-section="features">Features</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#docs" class="nav-link" data-section="docs">Documentation</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#demo" class="nav-link" data-section="demo">Try It Live</a>
+                </li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="gradient-text">Nmap MCP Server</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Professional network scanning capabilities exposed through the Model Context Protocol (MCP). 
+                    Secure, scalable, and developer-friendly.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#demo" class="btn btn-primary">
+                        <i class="fas fa-play"></i>
+                        Try Live Demo
+                    </a>
+                    <a href="#docs" class="btn btn-secondary">
+                        <i class="fas fa-book"></i>
+                        View Documentation
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <span class="stat-number">2</span>
+                        <span class="stat-label">MCP Tools</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">5min</span>
+                        <span class="stat-label">Scan Timeout</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">100%</span>
+                        <span class="stat-label">Input Validated</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <div class="terminal-buttons">
+                            <span class="terminal-button red"></span>
+                            <span class="terminal-button yellow"></span>
+                            <span class="terminal-button green"></span>
+                        </div>
+                        <span class="terminal-title">Nmap MCP Server</span>
+                    </div>
+                    <div class="terminal-body">
+                        <div class="terminal-line">
+                            <span class="prompt">$</span>
+                            <span class="command">curl -X POST /mcp \</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="indent">-d '{"method": "tools/call",</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="indent">"params": {"name": "nmapScan",</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="indent">"arguments": {"target": "scanme.nmap.org"}}}'</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="output">{"result": {"content": [{"type": "text",</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="output">"text": "Nmap Scan Results..."}]}}</span>
+                        </div>
+                        <div class="terminal-cursor"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Why Choose Nmap MCP Server?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Secure by Design</h3>
+                    <p>Input validation, command sanitization, and safe execution environment protect against injection attacks.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3>High Performance</h3>
+                    <p>Optimized for speed with configurable timeouts and efficient XML parsing for fast results.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h3>MCP Compatible</h3>
+                    <p>Full Model Context Protocol compliance ensures seamless integration with AI systems and automation tools.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-cloud"></i>
+                    </div>
+                    <h3>Cloud Ready</h3>
+                    <p>Containerized with Docker, ready for deployment on any cloud platform including Render, AWS, and more.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <h3>Developer Friendly</h3>
+                    <p>RESTful JSON-RPC 2.0 API with comprehensive documentation and examples for quick integration.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-expand-arrows-alt"></i>
+                    </div>
+                    <h3>Flexible Scanning</h3>
+                    <p>Support for domains, IP addresses, CIDR ranges, and all standard Nmap flags and scan types.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Documentation Section -->
+    <section id="docs" class="docs">
+        <div class="container">
+            <h2 class="section-title">Documentation</h2>
+            
+            <div class="docs-nav">
+                <button class="docs-tab active" data-tab="quickstart">Quick Start</button>
+                <button class="docs-tab" data-tab="api">API Reference</button>
+                <button class="docs-tab" data-tab="examples">Examples</button>
+                <button class="docs-tab" data-tab="deployment">Deployment</button>
+            </div>
+
+            <div class="docs-content">
+                <!-- Quick Start Tab -->
+                <div class="docs-tab-content active" id="quickstart">
+                    <h3>Quick Start Guide</h3>
+                    <p>Get up and running with the Nmap MCP Server in minutes.</p>
+                    
+                    <div class="step">
+                        <h4><span class="step-number">1</span>Make a Request</h4>
+                        <p>Send a POST request to the <code>/mcp</code> endpoint:</p>
+                        <pre><code class="language-bash">curl -X POST http://localhost:5001/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "nmapScan",
+      "arguments": {
+        "target": "scanme.nmap.org",
+        "flags": "-T4 -F"
+      }
+    }
+  }'</code></pre>
+                    </div>
+
+                    <div class="step">
+                        <h4><span class="step-number">2</span>Get Results</h4>
+                        <p>Receive detailed scan results in JSON format:</p>
+                        <pre><code class="language-json">{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "content": [{
+      "type": "text",
+      "text": "Nmap Scan Results for scanme.nmap.org\n\nScan started: ...\nHost: 45.33.32.156 (scanme.nmap.org)\nStatus: up\nOpen ports:\n  22/tcp - ssh\n  80/tcp - http\n  ..."
+    }]
+  }
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- API Reference Tab -->
+                <div class="docs-tab-content" id="api">
+                    <h3>API Reference</h3>
+                    
+                    <div class="api-section">
+                        <h4>nmapScan Tool</h4>
+                        <p>Performs network scanning using Nmap with customizable parameters.</p>
+                        
+                        <div class="api-endpoint">
+                            <div class="endpoint-header">
+                                <span class="method">POST</span>
+                                <span class="path">/mcp</span>
+                            </div>
+                            <div class="endpoint-body">
+                                <h5>Parameters</h5>
+                                <ul>
+                                    <li><strong>target</strong> (string, required): Domain name, IP address, or CIDR notation</li>
+                                    <li><strong>flags</strong> (string, optional): Nmap scanning flags (default: "-T4 -p 1-1000")</li>
+                                </ul>
+                                
+                                <h5>Common Nmap Flags</h5>
+                                <div class="flag-grid">
+                                    <div class="flag-item">
+                                        <code>-T4</code>
+                                        <span>Aggressive timing</span>
+                                    </div>
+                                    <div class="flag-item">
+                                        <code>-p 80,443</code>
+                                        <span>Specific ports</span>
+                                    </div>
+                                    <div class="flag-item">
+                                        <code>-sS</code>
+                                        <span>SYN scan</span>
+                                    </div>
+                                    <div class="flag-item">
+                                        <code>-A</code>
+                                        <span>Aggressive scan</span>
+                                    </div>
+                                    <div class="flag-item">
+                                        <code>-F</code>
+                                        <span>Fast scan</span>
+                                    </div>
+                                    <div class="flag-item">
+                                        <code>--top-ports 100</code>
+                                        <span>Top 100 ports</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="api-section">
+                        <h4>getInfo Tool</h4>
+                        <p>Returns information about the Nmap MCP server and its capabilities.</p>
+                        
+                        <div class="api-endpoint">
+                            <div class="endpoint-header">
+                                <span class="method">POST</span>
+                                <span class="path">/mcp</span>
+                            </div>
+                            <div class="endpoint-body">
+                                <h5>Parameters</h5>
+                                <p>No parameters required.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Examples Tab -->
+                <div class="docs-tab-content" id="examples">
+                    <h3>Usage Examples</h3>
+                    
+                    <div class="example">
+                        <h4>Basic Port Scan</h4>
+                        <pre><code class="language-json">{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "nmapScan",
+    "arguments": {
+      "target": "example.com",
+      "flags": "-T4 -p 1-1000"
+    }
+  }
+}</code></pre>
+                    </div>
+
+                    <div class="example">
+                        <h4>Service Detection</h4>
+                        <pre><code class="language-json">{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "nmapScan",
+    "arguments": {
+      "target": "192.168.1.1",
+      "flags": "-sV -T4 -p 22,80,443"
+    }
+  }
+}</code></pre>
+                    </div>
+
+                    <div class="example">
+                        <h4>Network Range Scan</h4>
+                        <pre><code class="language-json">{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "nmapScan",
+    "arguments": {
+      "target": "10.0.0.0/24",
+      "flags": "-sn"
+    }
+  }
+}</code></pre>
+                    </div>
+
+                    <div class="example">
+                        <h4>Get Server Info</h4>
+                        <pre><code class="language-json">{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "method": "tools/call",
+  "params": {
+    "name": "getInfo",
+    "arguments": {}
+  }
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Deployment Tab -->
+                <div class="docs-tab-content" id="deployment">
+                    <h3>Deployment Guide</h3>
+                    
+                    <div class="deployment-option">
+                        <h4><i class="fab fa-docker"></i> Docker Deployment</h4>
+                        <pre><code class="language-bash"># Build the image
+docker build -t nmap-mcp-server .
+
+# Run the container
+docker run -p 5001:5001 nmap-mcp-server</code></pre>
+                    </div>
+
+                    <div class="deployment-option">
+                        <h4><i class="fas fa-cloud"></i> Render Deployment</h4>
+                        <ol>
+                            <li>Connect your repository to Render</li>
+                            <li>Create a new Web Service</li>
+                            <li>Set the build command: <code>docker build</code></li>
+                            <li>Set the start command: <code>node server.js</code></li>
+                            <li>Configure environment variables if needed</li>
+                        </ol>
+                    </div>
+
+                    <div class="deployment-option">
+                        <h4><i class="fas fa-server"></i> Local Development</h4>
+                        <pre><code class="language-bash"># Install dependencies
+npm install
+
+# Start the server
+npm start
+
+# Server will be available at http://localhost:5001</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Demo Section -->
+    <section id="demo" class="demo">
+        <div class="container">
+            <h2 class="section-title">Try It Live</h2>
+            <p class="section-subtitle">Test the Nmap MCP Server directly from your browser</p>
+            
+            <div class="demo-container">
+                <div class="demo-input">
+                    <h3>Request Configuration</h3>
+                    <div class="input-group">
+                        <label for="target">Target</label>
+                        <input type="text" id="target" placeholder="scanme.nmap.org" value="scanme.nmap.org">
+                        <small>Domain name, IP address, or CIDR notation</small>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="flags">Nmap Flags</label>
+                        <input type="text" id="flags" placeholder="-T4 -F" value="-T4 -F">
+                        <small>Use -F for fast scan, -T4 for aggressive timing</small>
+                    </div>
+                    
+                    <div class="demo-buttons">
+                        <button id="scan-btn" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                            Start Scan
+                        </button>
+                        <button id="info-btn" class="btn btn-secondary">
+                            <i class="fas fa-info-circle"></i>
+                            Get Server Info
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="demo-output">
+                    <h3>Response</h3>
+                    <div class="output-container">
+                        <pre id="output"><code>Click "Start Scan" or "Get Server Info" to see the response...</code></pre>
+                    </div>
+                    <div class="loading" id="loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Scanning in progress...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Nmap MCP Server</h4>
+                    <p>Professional network scanning through the Model Context Protocol</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-github"></i></a>
+                        <a href="#"><i class="fab fa-docker"></i></a>
+                        <a href="#"><i class="fas fa-book"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#docs">Documentation</a></li>
+                        <li><a href="#demo">Live Demo</a></li>
+                        <li><a href="#features">Features</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="https://nmap.org">Nmap Official</a></li>
+                        <li><a href="https://modelcontextprotocol.io">MCP Specification</a></li>
+                        <li><a href="https://smithery.ai">Smithery Platform</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Nmap MCP Server. Built with ❤️ for the developer community.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html> 

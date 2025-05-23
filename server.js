@@ -4,6 +4,12 @@ import { z } from 'zod';
 import { exec, execSync } from 'child_process';
 import { Parser as XmlParser } from 'xml2js';
 import { promisify } from 'util';
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const xmlParser = new XmlParser({ explicitArray: false, mergeAttrs: true });
 const execAsync = promisify(exec);
@@ -57,16 +63,6 @@ function validateFlags(flags) {
     return false;
   }
   
-  // Whitelist of safe nmap flags
-  const allowedFlags = [
-    '-T0', '-T1', '-T2', '-T3', '-T4', '-T5',
-    '-sS', '-sT', '-sU', '-sA', '-sW', '-sM', '-sV', '-sC',
-    '-F', '-r', '--top-ports', '-p', '-A', '-O',
-    '--version-intensity', '--osscan-limit', '--osscan-guess',
-    '-oX', '-oN', '-oG', '-v', '-d', '--reason', '--open', '--packet-trace',
-    '--script'
-  ];
-  
   const flagsArray = flags.split(/\s+/);
   
   for (let i = 0; i < flagsArray.length; i++) {
@@ -104,20 +100,28 @@ function validateFlags(flags) {
     
     // Check if it's a script name (after --script flag)
     if (i > 0 && flagsArray[i-1] === '--script') {
-      // Allow 'vuln' script and potentially others in the future by relaxing this check
-      // For now, let's be specific or allow any alphanumeric script name
-      if (flag.match(/^[a-zA-Z0-9_\-]+$/)) { 
+      // Allow any alphanumeric script name with basic symbols
+      if (flag.match(/^[a-zA-Z0-9_\-.,]+$/)) { 
         continue;
       }
       return false;
     }
     
-    // Check if it matches allowed flags
-    const isAllowedFlag = allowedFlags.some(allowed => flag.startsWith(allowed));
-    if (!isAllowedFlag) {
-      console.log(`Flag validation failed for: ${flag}`);
-      return false;
+    // Allow any flag that starts with - or --
+    // This replaces the whitelist approach
+    if (flag.startsWith('-')) {
+      // Block potentially dangerous command injection characters
+      if (flag.includes(';') || flag.includes('&') || flag.includes('|') || 
+          flag.includes('>') || flag.includes('<') || flag.includes('`')) {
+        console.log(`Flag validation failed for: ${flag} - contains potential command injection characters`);
+        return false;
+      }
+      continue;
     }
+    
+    // If we get here, the flag doesn't match our format requirements
+    console.log(`Flag validation failed for: ${flag} - not a valid flag format`);
+    return false;
   }
   
   return true;
@@ -279,6 +283,15 @@ function formatNmapResults(parsedResult) {
 console.log('Initializing Nmap MCP Server...');
 
 const { app } = createStatelessServer(createMcpServer);
+
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve the documentation website at the root
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
