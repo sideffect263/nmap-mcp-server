@@ -30,7 +30,7 @@ function findNmapPath() {
 
   try {
     // Try 'where' command, common on Windows, though less likely in Docker
-    const path = execSync('where nmap').toString().trim().split('\\n')[0]; // Take the first result if multiple
+    const path = execSync('where nmap').toString().trim().split('\n')[0]; // Take the first result if multiple
     if (path) {
       console.log(`Found nmap at: ${path}`);
       return path;
